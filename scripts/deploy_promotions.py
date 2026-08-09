@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-import json
 import os
 import sys
+import json
 import argparse
-import urllib.request
 import urllib.error
+import urllib.request
+
 
 def validate_promotion(data):
     required_fields = ["title", "description", "discount_code", "valid_until"]
