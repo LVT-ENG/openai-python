@@ -1,0 +1,33 @@
+name: Deploy Promotions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'promotion_example.json'
+  workflow_dispatch:
+    inputs:
+      file:
+        description: 'Path to the JSON file containing promotional content'
+        required: true
+        default: 'promotion_example.json'
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Deploy Promotion
+        env:
+          TRYONYOU_API_KEY: ${{ secrets.TRYONYOU_API_KEY }}
+        run: |
+          python3 scripts/deploy_promotions.py "${{ github.event.inputs.file || 'promotion_example.json' }}"

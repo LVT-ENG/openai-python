@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-import json
 import os
 import sys
+import json
 import argparse
-import urllib.request
 import urllib.error
+import urllib.request
+from typing import Any, Dict, cast
 
-def validate_promotion(data):
+
+def validate_promotion(data: Dict[str, Any]) -> bool:
     required_fields = ["title", "description", "discount_code", "valid_until"]
     for field in required_fields:
         if field not in data:
             raise ValueError(f"Missing required field: {field}")
     return True
 
-def deploy_promotion(data, api_url, api_key):
+def deploy_promotion(data: Dict[str, Any], api_url: str, api_key: str) -> bool:
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}"
@@ -21,7 +23,10 @@ def deploy_promotion(data, api_url, api_key):
 
     req = urllib.request.Request(api_url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
     try:
-        print(f"Deploying promotion '{data.get('title')}' to {api_url}...")
+        title = data.get("title")
+        if not isinstance(title, str):
+            title = str(title)
+        print(f"Deploying promotion '{title}' to {api_url}...")
         response = urllib.request.urlopen(req)
         response_data = response.read()
         print(f"Deployment successful: {response_data}")
@@ -30,7 +35,7 @@ def deploy_promotion(data, api_url, api_key):
         print(f"Failed to deploy: {e}")
         return False
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Deploy promotional content for tryonyou.pro")
     parser.add_argument("file", help="Path to the JSON file containing promotional content")
     parser.add_argument("--api-url", default="https://api.tryonyou.pro/v1/promotions", help="API Endpoint URL")
@@ -44,8 +49,11 @@ def main():
 
     try:
         with open(args.file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-    except json.JSONDecodeError as e:
+            loaded_data = json.load(f)
+            if not isinstance(loaded_data, dict):
+                raise ValueError("JSON file must contain a dictionary")
+            data = cast(Dict[str, Any], loaded_data)
+    except (json.JSONDecodeError, ValueError) as e:
         print(f"Error parsing JSON: {e}")
         sys.exit(1)
 
@@ -65,6 +73,8 @@ def main():
         print("Simulating deployment (dry-run mode)...")
         print("Deployment successful.")
     else:
+        if api_key is None:
+            api_key = ""
         success = deploy_promotion(data, args.api_url, api_key)
         if not success:
             sys.exit(1)
