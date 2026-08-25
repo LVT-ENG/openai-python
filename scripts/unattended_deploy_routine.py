@@ -10,8 +10,8 @@ import os
 import sys
 import time
 import shutil
-import subprocess
 import argparse
+import subprocess
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SCRIPT_DIR)
