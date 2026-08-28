@@ -70,11 +70,11 @@ def main():
     try:
         response = urllib.request.urlopen(req, timeout=10)
         print(f"Despliegue exitoso. Código de respuesta: {response.status}")
-    except urllib.error.URLError as e:
-        print(f"Fallo de red en el despliegue: {e}")
-        sys.exit(1)
     except urllib.error.HTTPError as e:
         print(f"Error HTTP en el despliegue: {e.code} - {e.reason}")
+        sys.exit(1)
+    except urllib.error.URLError as e:
+        print(f"Fallo de red en el despliegue: {e}")
         sys.exit(1)
     except Exception as e:
         print(f"Error en el despliegue: {e}")
