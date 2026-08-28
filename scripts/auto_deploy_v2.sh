@@ -10,7 +10,7 @@ fi
 PROMO_FILE="$1"
 
 # Ejecutar el script Python que contiene la lógica de validación y despliegue
-python3 auto_deploy.py "$PROMO_FILE"
+python3 scripts/auto_deploy_v2.py "$PROMO_FILE"
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then
