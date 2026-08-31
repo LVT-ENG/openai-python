@@ -5,11 +5,12 @@
 import os
 import sys
 import json
-import argparse
 import shutil
+import argparse
 import urllib.error
 import urllib.request
 from typing import Any, Dict, cast
+
 
 def validar_promocion(data: Dict[str, Any]) -> bool:
     """Valida la estructura de una promoción."""
