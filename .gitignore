@@ -18,3 +18,4 @@ Brewfile.lock.json
 .DS_Store
 
 examples/*.mp3
+promotions.log
