@@ -5,14 +5,10 @@ on:
     branches:
       - main
     paths:
-      - 'promotion_example.json'
+      - 'promotions/**/*.json'
+  schedule:
+    - cron: '0 0 * * *'
   workflow_dispatch:
-    inputs:
-      file:
-        description: 'Path to the JSON file containing promotional content'
-        required: true
-        default: 'promotion_example.json'
-        type: string
 
 jobs:
   deploy:
@@ -30,4 +26,4 @@ jobs:
         env:
           TRYONYOU_API_KEY: ${{ secrets.TRYONYOU_API_KEY }}
         run: |
-          python3 scripts/deploy_promotions.py "${{ github.event.inputs.file || 'promotion_example.json' }}"
+          bash ./scripts/automate_promotions.sh
