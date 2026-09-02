@@ -12,7 +12,7 @@ import time
 import shutil
 import urllib.error
 import urllib.request
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 API_URL = "https://api.tryonyou.pro/v1/promotions"
 REQUIRED_FIELDS = ["title", "description", "discount_code", "valid_until"]
@@ -58,12 +58,11 @@ def procesar_directorio(input_dir: str, processed_dir: str, failed_dir: str, api
 
         try:
             with open(filepath, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            if not isinstance(data, dict):
-                raise ValueError("El archivo JSON no contiene un objeto/diccionario.")
-
-            validar_promocion(data)
+                loaded_data = json.load(f)
+                if not isinstance(loaded_data, dict):
+                    raise ValueError("El archivo JSON no contiene un objeto/diccionario.")
+                data = cast(Dict[str, Any], loaded_data)
+                validar_promocion(data)
 
             exito = desplegar_promocion(data, api_key)
 
