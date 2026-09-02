@@ -10,8 +10,8 @@ import sys
 import json
 import time
 import shutil
-import urllib.request
 import urllib.error
+import urllib.request
 from typing import Any, Dict
 
 API_URL = "https://api.tryonyou.pro/v1/promotions"
