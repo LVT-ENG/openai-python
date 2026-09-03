@@ -18,7 +18,7 @@ import urllib.request
 API_URL = "https://api.tryonyou.pro/v1/promotions"
 REQUIRED_FIELDS = ["title", "description", "discount_code", "valid_until"]
 
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
         print("Uso: ./auto_deploy.py <archivo_promocion.json>")
         sys.exit(1)

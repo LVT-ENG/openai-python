@@ -14,7 +14,7 @@ import urllib.request
 API_URL = "https://api.tryonyou.pro/v1/promotions"
 CAMPOS_REQUERIDOS = ["title", "description", "discount_code", "valid_until"]
 
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
         print("Uso: ./automatizacion_promociones.py <archivo_promocion.json>")
         sys.exit(1)
