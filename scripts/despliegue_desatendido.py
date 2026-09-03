@@ -6,7 +6,7 @@ import shutil
 import argparse
 import urllib.error
 import urllib.request
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 
 def validar_promocion(data: Dict[str, Any]) -> bool:
@@ -42,9 +42,10 @@ def procesar_archivos(directorio_base: str, dry_run: bool) -> None:
 
         try:
             with open(ruta_archivo, 'r', encoding='utf-8') as f:
-                datos = json.load(f)
-                if not isinstance(datos, dict):
+                datos_raw = json.load(f)
+                if not isinstance(datos_raw, dict):
                     raise ValueError("El archivo JSON debe contener un diccionario")
+                datos = cast(Dict[str, Any], datos_raw)
 
             validar_promocion(datos)
             print("Validación completada.")
