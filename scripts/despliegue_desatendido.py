@@ -41,10 +41,12 @@ def procesar_archivos(directorio_base: str, dry_run: bool) -> None:
         print(f"Procesando archivo: {archivo}")
 
         try:
+            from typing import cast
             with open(ruta_archivo, 'r', encoding='utf-8') as f:
-                datos = json.load(f)
-                if not isinstance(datos, dict):
+                datos_cargados = json.load(f)
+                if not isinstance(datos_cargados, dict):
                     raise ValueError("El archivo JSON debe contener un diccionario")
+                datos = cast(Dict[str, Any], datos_cargados)
 
             validar_promocion(datos)
             print("Validación completada.")

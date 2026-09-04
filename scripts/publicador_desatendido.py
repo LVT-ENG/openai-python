@@ -14,11 +14,12 @@ def validar_promocion(data: Dict[str, Any]) -> bool:
 
 def parsear_archivo(ruta_archivo: str) -> Dict[str, Any]:
     """Lee y parsea un archivo JSON de promoción."""
+    from typing import cast
     with open(ruta_archivo, 'r', encoding='utf-8') as f:
         datos = json.load(f)
         if not isinstance(datos, dict):
             raise ValueError("El archivo JSON debe contener un diccionario")
-        return datos
+        return cast(Dict[str, Any], datos)
 
 def desplegar_promocion(data: Dict[str, Any], api_url: str, api_key: str, dry_run: bool = False) -> bool:
     """Ejecuta el despliegue automático en producción o simula en modo dry-run."""
