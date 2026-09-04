@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-import json
 import os
+import json
 from typing import Any, Dict
+
 
 def validar_promocion(data: Dict[str, Any]) -> bool:
     """Valida que los datos de la promoción contengan los campos requeridos."""
@@ -29,8 +30,8 @@ def desplegar_promocion(data: Dict[str, Any], api_url: str, api_key: str, dry_ru
         print("Error: TRYONYOU_API_KEY no configurada. Usa --dry-run para simular.")
         return False
 
-    import urllib.request
     import urllib.error
+    import urllib.request
 
     headers = {
         "Content-Type": "application/json",
