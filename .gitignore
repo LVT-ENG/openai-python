@@ -19,3 +19,7 @@ Brewfile.lock.json
 
 examples/*.mp3
 promotions.log
+monitoreo.log
+promotions/
+promotions_processed/
+promotions_failed/
