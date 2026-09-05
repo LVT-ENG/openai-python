@@ -7,12 +7,13 @@
 import os
 import sys
 import json
+import time
 import shutil
 import argparse
-import time
 import urllib.error
 import urllib.request
 from typing import Any, Dict, cast
+
 
 def validar_promocion(data: Dict[str, Any]) -> bool:
     """Valida la estructura de una promoción asegurando los campos mínimos."""
@@ -22,14 +23,12 @@ def validar_promocion(data: Dict[str, Any]) -> bool:
             raise ValueError(f"Falta el campo requerido: {campo}")
     return True
 
+
 def desplegar_promocion(data: Dict[str, Any], api_url: str, api_key: str) -> bool:
     """Ejecuta el despliegue automático enviando los datos a la API de producción."""
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
 
-    req = urllib.request.Request(api_url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
+    req = urllib.request.Request(api_url, data=json.dumps(data).encode("utf-8"), headers=headers, method="POST")
     try:
         titulo = data.get("title", "Sin título")
         print(f"Desplegando promoción '{titulo}' en {api_url}...")
@@ -37,7 +36,7 @@ def desplegar_promocion(data: Dict[str, Any], api_url: str, api_key: str) -> boo
         datos_respuesta = respuesta.read()
 
         try:
-            respuesta_texto = datos_respuesta.decode('utf-8')
+            respuesta_texto = datos_respuesta.decode("utf-8")
         except UnicodeDecodeError:
             respuesta_texto = str(datos_respuesta)
 
@@ -47,10 +46,13 @@ def desplegar_promocion(data: Dict[str, Any], api_url: str, api_key: str) -> boo
         print(f"Error en el despliegue: {e}")
         return False
 
-def procesar_archivos(dir_promociones: str, dir_procesadas: str, dir_fallidas: str, api_url: str, api_key: str, dry_run: bool) -> None:
+
+def procesar_archivos(
+    dir_promociones: str, dir_procesadas: str, dir_fallidas: str, api_url: str, api_key: str, dry_run: bool
+) -> None:
     """Revisa el directorio por archivos nuevos y los procesa."""
     for nombre_archivo in os.listdir(dir_promociones):
-        if not nombre_archivo.endswith('.json'):
+        if not nombre_archivo.endswith(".json"):
             continue
 
         ruta_archivo = os.path.join(dir_promociones, nombre_archivo)
@@ -58,7 +60,7 @@ def procesar_archivos(dir_promociones: str, dir_procesadas: str, dir_fallidas: s
 
         exito = False
         try:
-            with open(ruta_archivo, 'r', encoding='utf-8') as f:
+            with open(ruta_archivo, "r", encoding="utf-8") as f:
                 datos_cargados = json.load(f)
                 if not isinstance(datos_cargados, dict):
                     raise ValueError("El archivo JSON debe contener un diccionario")
@@ -88,9 +90,14 @@ def procesar_archivos(dir_promociones: str, dir_procesadas: str, dir_fallidas: s
             print(f"Fallo: moviendo a {dir_fallidas}")
             shutil.move(ruta_archivo, os.path.join(dir_fallidas, nombre_archivo))
 
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Daemon para automatizar la publicación desatendida de promociones para tryonyou.pro")
-    parser.add_argument("--api-url", default="https://api.tryonyou.pro/v1/promotions", help="URL del Endpoint de la API")
+    parser = argparse.ArgumentParser(
+        description="Daemon para automatizar la publicación desatendida de promociones para tryonyou.pro"
+    )
+    parser.add_argument(
+        "--api-url", default="https://api.tryonyou.pro/v1/promotions", help="URL del Endpoint de la API"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Simula el despliegue sin hacer la petición HTTP")
     parser.add_argument("--interval", type=int, default=5, help="Intervalo en segundos para revisar el directorio")
     parser.add_argument("--once", action="store_true", help="Ejecutar solo una vez en lugar de modo daemon")
@@ -126,6 +133,7 @@ def main() -> None:
             time.sleep(args.interval)
     except KeyboardInterrupt:
         print("\nDaemon detenido por el usuario.")
+
 
 if __name__ == "__main__":
     main()
