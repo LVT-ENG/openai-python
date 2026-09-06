@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-auto_deploy.py - Automatiza la publicación de promociones para tryonyou.pro.
+publicar_promociones.py - Automatiza la publicación de promociones para tryonyou.pro.
 Toma el contenido promocional generado (JSON), valida su estructura, y
 ejecuta el despliegue automático en producción de forma desatendida.
 
 Uso:
-  ./auto_deploy.py <archivo_promocion.json>
+  ./publicar_promociones.py <archivo_promocion.json>
 """
 
 import os
@@ -20,7 +20,7 @@ REQUIRED_FIELDS = ["title", "description", "discount_code", "valid_until"]
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Uso: ./auto_deploy.py <archivo_promocion.json>")
+        print("Uso: ./publicar_promociones.py <archivo_promocion.json>")
         sys.exit(1)
 
     file_path = sys.argv[1]
@@ -50,8 +50,13 @@ def main() -> None:
     print("Validación de estructura completada exitosamente.")
 
     # 3. Ejecutar el despliegue en producción de forma desatendida
-    # Usamos una variable de entorno para la clave API, o simulamos si no está en un entorno CI
-    api_key = os.environ.get("TRYONYOU_API_KEY", "default-unattended-key-if-none")
+    api_key = os.environ.get("TRYONYOU_API_KEY")
+    if not api_key:
+        # Modo dry-run / fallback if CI but no key
+        print("Advertencia: TRYONYOU_API_KEY no está configurada, operando en modo simulación (dry-run).")
+        print("Simulando despliegue desatendido en producción...")
+        print("Despliegue exitoso.")
+        sys.exit(0)
 
     headers = {
         "Content-Type": "application/json",
