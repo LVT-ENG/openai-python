@@ -1,72 +1,61 @@
 # Automatización de Publicación de Promociones para tryonyou.pro
 
-Esta guía explica el funcionamiento de los scripts diseñados para validar, monitorizar y desplegar automáticamente las promociones en el entorno de producción.
+Esta guía explica el funcionamiento del script unificado diseñado para validar y desplegar automáticamente las promociones en el entorno de producción de forma desatendida.
 
 ## Componentes del sistema
 
-El sistema se compone de varios scripts, todos ellos preparados para operar en español:
+El sistema ahora se compone de un único script principal, preparado para operar en español:
 
-1. **`deploy_promotions.py`**:
-   - Toma el archivo JSON con el contenido de la promoción.
-   - Valida su estructura asegurando que los campos obligatorios existen.
-   - Ejecuta la petición HTTP para enviar los datos a la API en producción.
-   - Soporta un modo `--dry-run` para validar sin realizar la petición de red.
-
-2. **`automate_promotions.sh`**:
-   - Itera a través del directorio `promotions/`.
-   - Llama a `deploy_promotions.py` para cada archivo JSON.
-   - Mueve los archivos procesados exitosamente a `promotions_processed/` o a `promotions_failed/` en caso de error.
-
-3. **`watch_promotions.sh`**:
-   - Utiliza `inotifywait` para monitorizar continuamente el directorio `promotions/`.
-   - Cuando se añade o modifica un archivo JSON de promoción, dispara automáticamente `automate_promotions.sh`.
-
-4. **`rutina_desatendida_promociones.sh`**:
-   - Es el punto de entrada principal para la automatización en background.
-   - Lanza `watch_promotions.sh` en modo desacoplado (utilizando `nohup`).
-   - Redirige todas las salidas (logs y errores) al archivo central `promotions.log`.
+1. **`scripts/daemon_promociones.py`**:
+   - Funciona como un "daemon" que monitorea periódicamente el directorio `promociones/`.
+   - Cuando encuentra un archivo JSON con contenido de promoción, valida su estructura asegurando que los campos obligatorios existen (`title`, `description`, `discount_code`, `valid_until`).
+   - Ejecuta la petición HTTP POST para enviar los datos a la API de producción (`https://api.tryonyou.pro/v1/promotions`).
+   - Mueve los archivos procesados exitosamente al directorio `promociones_procesadas/` o a `promociones_fallidas/` en caso de error de red o validación.
+   - Soporta un modo `--dry-run` para probar el flujo completo sin realizar la petición de red real.
 
 ## Cómo usar el sistema
 
-### Despliegue manual e interactivo
-
-Si deseas probar o desplegar un único archivo promocional:
-
-```bash
-./scripts/auto_deploy_promotions.sh <archivo.json>
-```
-
-Para simularlo sin afectar a la API real, asegúrate de que no esté definida la variable `TRYONYOU_API_KEY` o utiliza explícitamente `--dry-run` donde se soporte.
-
 ### Configuración del Despliegue Desatendido (Background)
 
-Para que el servidor esté permanentemente escuchando y desplegando nuevos archivos que se depositen en la carpeta `promotions/`, ejecuta:
+Para que el script esté permanentemente escuchando y desplegando nuevos archivos que se depositen en la carpeta `promociones/`, ejecuta el daemon en segundo plano:
 
 ```bash
-./scripts/rutina_desatendida_promociones.sh
+python3 scripts/daemon_promociones.py > daemon_promociones.log 2>&1 &
 ```
 
-Esto iniciará el proceso en background. El sistema te mostrará un número de proceso (PID).
+Esto iniciará el proceso en background. El sistema comprobará la carpeta cada 5 segundos.
 Puedes monitorizar la actividad revisando el archivo de log:
 
 ```bash
-tail -f promotions.log
+tail -f daemon_promociones.log
 ```
 
-### Configuración con Cron (Alternativa)
+Para detener el daemon, puedes buscar el PID y matarlo:
+```bash
+kill $(pgrep -f "daemon_promociones.py")
+```
 
-Si prefieres ejecutar el despliegue de forma periódica en lugar de reaccionar a eventos (inotify), puedes añadir una tarea cron para ejecutar el procesamiento en bloque:
+### Ejecución Única (One-off)
 
-1. Abre la configuración de cron:
-   ```bash
-   crontab -e
-   ```
-2. Añade la siguiente línea para que se ejecute cada hora (por ejemplo):
-   ```cron
-   0 * * * * /ruta/absoluta/al/proyecto/scripts/automate_promotions.sh >> /ruta/absoluta/al/proyecto/promotions.log 2>&1
-   ```
-*(Nota: Si usas cron, no es necesario ejecutar la rutina desatendida con `watch_promotions.sh`, ya que ambos cumplirían propósitos similares.)*
+Si deseas probar o procesar los archivos de promoción actuales en el directorio solo una vez (sin quedarse corriendo):
+
+```bash
+python3 scripts/daemon_promociones.py --once
+```
+
+Para simularlo sin afectar a la API real, añade la bandera `--dry-run`:
+
+```bash
+python3 scripts/daemon_promociones.py --once --dry-run
+```
+
+## Directorios y Archivos
+
+Al ejecutar el script, automáticamente creará la siguiente estructura si no existe:
+- `promociones/` : Directorio donde debes depositar los archivos JSON promocionales nuevos.
+- `promociones_procesadas/` : Directorio a donde se mueven los archivos que fueron validados y enviados con éxito.
+- `promociones_fallidas/` : Directorio a donde se mueven los archivos con errores de validación o despliegue.
 
 ## Variables de Entorno
 
-- **`TRYONYOU_API_KEY`**: Es requerida para realizar peticiones reales a la API de producción. Si no está configurada, los scripts de despliegue operarán o advertirán en modo *dry-run* o simulación.
+- **`TRYONYOU_API_KEY`**: Es requerida para realizar peticiones reales a la API de producción. Si no está configurada y no estás en modo `--dry-run`, el script mostrará un error y se detendrá.
