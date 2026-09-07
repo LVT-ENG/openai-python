@@ -19,3 +19,9 @@ Brewfile.lock.json
 
 examples/*.mp3
 promotions.log
+
+# Automatizacion promociones
+promociones/
+promociones_procesadas/
+promociones_fallidas/
+daemon_promociones.log
