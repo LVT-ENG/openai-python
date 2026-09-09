@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # scripts/auto_deploy_v2.py
+import os
 import sys
 import json
-import os
-import urllib.request
 import urllib.error
+import urllib.request
+
 
 def validar_promocion(data):
     campos_requeridos = ["title", "description", "discount_code", "valid_until"]
