@@ -5,9 +5,10 @@ import sys
 import json
 import urllib.error
 import urllib.request
+from typing import Any, Dict
 
 
-def validar_promocion(data):
+def validar_promocion(data: Dict[str, Any]) -> bool:
     campos_requeridos = ["title", "description", "discount_code", "valid_until"]
     for campo in campos_requeridos:
         if campo not in data:
