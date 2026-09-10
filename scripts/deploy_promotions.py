@@ -8,9 +8,10 @@ import os
 import sys
 import json
 import argparse
-import urllib.request
 import urllib.error
+import urllib.request
 from typing import Any, Dict, cast
+
 
 def validate_promotion(data: Dict[str, Any]) -> None:
     required_fields = ["title", "description", "discount_code", "valid_until"]
@@ -18,6 +19,7 @@ def validate_promotion(data: Dict[str, Any]) -> None:
         if field not in data:
             print(f"Validation Error: Missing required field '{field}'")
             sys.exit(1)
+
 
 def deploy_promotion(data: Dict[str, Any], dry_run: bool) -> None:
     if dry_run:
@@ -31,10 +33,7 @@ def deploy_promotion(data: Dict[str, Any], dry_run: bool) -> None:
         sys.exit(1)
 
     api_url = "https://api.tryonyou.pro/v1/promotions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
 
     req = urllib.request.Request(api_url, data=json.dumps(data).encode("utf-8"), headers=headers, method="POST")
     try:
@@ -53,6 +52,7 @@ def deploy_promotion(data: Dict[str, Any], dry_run: bool) -> None:
     except urllib.error.URLError as e:
         print(f"Deployment failed: {e}")
         sys.exit(1)
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Deploy a promotion from a JSON file.")
@@ -80,6 +80,7 @@ def main() -> None:
 
     validate_promotion(data)
     deploy_promotion(data, args.dry_run)
+
 
 if __name__ == "__main__":
     main()
