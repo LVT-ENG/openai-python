@@ -1,5 +1,6 @@
 import os
 import json
+import pathlib
 import subprocess
 from unittest import mock
 
@@ -12,7 +13,7 @@ import pytest
 SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "scripts", "auto_deploy_v2.py")
 
 @pytest.fixture
-def valid_json_path(tmp_path):
+def valid_json_path(tmp_path: pathlib.Path) -> str:
     data = {
         "title": "Test Promo",
         "description": "50% off",
@@ -24,7 +25,7 @@ def valid_json_path(tmp_path):
     return str(p)
 
 @pytest.fixture
-def invalid_json_path(tmp_path):
+def invalid_json_path(tmp_path: pathlib.Path) -> str:
     data = {
         "title": "Test Promo",
         "discount_code": "TEST50"
@@ -34,7 +35,7 @@ def invalid_json_path(tmp_path):
     p.write_text(json.dumps(data), encoding='utf-8')
     return str(p)
 
-def test_missing_argument():
+def test_missing_argument() -> None:
     result = subprocess.run(
         ["python3", SCRIPT_PATH],
         capture_output=True,
@@ -43,7 +44,7 @@ def test_missing_argument():
     assert result.returncode == 1
     assert "Uso:" in result.stdout
 
-def test_file_not_found():
+def test_file_not_found() -> None:
     result = subprocess.run(
         ["python3", SCRIPT_PATH, "nonexistent_file.json"],
         capture_output=True,
@@ -52,7 +53,7 @@ def test_file_not_found():
     assert result.returncode == 1
     assert "No se encontró el archivo" in result.stdout
 
-def test_invalid_json(invalid_json_path):
+def test_invalid_json(invalid_json_path: str) -> None:
     result = subprocess.run(
         ["python3", SCRIPT_PATH, invalid_json_path],
         capture_output=True,
@@ -62,7 +63,7 @@ def test_invalid_json(invalid_json_path):
     assert "Error de validación" in result.stdout
     assert "Falta el campo requerido" in result.stdout
 
-def test_missing_api_key(valid_json_path, monkeypatch):
+def test_missing_api_key(valid_json_path: str, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("TRYONYOU_API_KEY", raising=False)
     result = subprocess.run(
         ["python3", SCRIPT_PATH, valid_json_path],
@@ -74,7 +75,7 @@ def test_missing_api_key(valid_json_path, monkeypatch):
     assert "TRYONYOU_API_KEY no está definida" in result.stdout
 
 @mock.patch("urllib.request.urlopen")
-def test_successful_deploy(mock_urlopen, valid_json_path, monkeypatch):
+def test_successful_deploy(mock_urlopen: mock.MagicMock, valid_json_path: str, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TRYONYOU_API_KEY", "test_key")
 
     mock_response = mock.MagicMock()
@@ -85,6 +86,7 @@ def test_successful_deploy(mock_urlopen, valid_json_path, monkeypatch):
     import sys
     import importlib.util
     spec = importlib.util.spec_from_file_location("auto_deploy", SCRIPT_PATH)
+    assert spec is not None
     auto_deploy = importlib.util.module_from_spec(spec)
 
     # Mock sys.argv
@@ -93,7 +95,10 @@ def test_successful_deploy(mock_urlopen, valid_json_path, monkeypatch):
         # We need to capture stdout for asserting
         from io import StringIO
         with mock.patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+            assert spec.loader is not None
             spec.loader.exec_module(auto_deploy)
+
+            # Since auto_deploy is constructed dynamically, mypy/pyright doesn't know it has main()
             auto_deploy.main()
             output = mock_stdout.getvalue()
 
