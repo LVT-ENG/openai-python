@@ -1,9 +1,9 @@
 import os
 import json
-import pytest
 import subprocess
 from unittest import mock
-import urllib.error
+
+import pytest
 
 # Assuming we want to run the python script via subprocess for end-to-end tests
 # or import and test specific functions if needed. We'll use subprocess for simplicity
