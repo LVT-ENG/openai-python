@@ -61,10 +61,16 @@ def procesar_archivos(
         exito = False
         try:
             with open(ruta_archivo, "r", encoding="utf-8") as f:
-                datos_cargados = json.load(f)
-                if not isinstance(datos_cargados, dict):
-                    raise ValueError("El archivo JSON debe contener un diccionario")
-                datos = cast(Dict[str, Any], datos_cargados)
+                contenido_archivo = f.read()
+
+            try:
+                datos_cargados = json.loads(contenido_archivo)
+            except json.JSONDecodeError as e:
+                datos_cargados = json.loads(contenido_archivo[:e.pos])
+
+            if not isinstance(datos_cargados, dict):
+                raise ValueError("El archivo JSON debe contener un diccionario")
+            datos = cast(Dict[str, Any], datos_cargados)
 
             validar_promocion(datos)
             print("Validación completada con éxito.")
