@@ -12,7 +12,7 @@ import shutil
 import argparse
 import urllib.error
 import urllib.request
-from typing import Any, Dict, cast
+from typing import Any, Dict
 
 
 def extraer_json(contenido: str) -> Dict[str, Any]:
@@ -28,14 +28,14 @@ def extraer_json(contenido: str) -> Dict[str, Any]:
         contenido = contenido[:-3].strip()
 
     try:
-        return json.loads(contenido)
+        return dict(json.loads(contenido))
     except json.JSONDecodeError as e:
         if e.pos > 0:
             try:
-                return json.loads(contenido[:e.pos])
+                return dict(json.loads(contenido[:e.pos]))
             except json.JSONDecodeError:
                 pass
-        raise ValueError("Error parseando JSON")
+        raise ValueError("Error parseando JSON") from e
 
 
 def validar_promocion(data: Dict[str, Any]) -> bool:
@@ -88,9 +88,7 @@ def procesar_archivos(
 
             datos_cargados = extraer_json(contenido_archivo)
 
-            if not isinstance(datos_cargados, dict):
-                raise ValueError("El archivo JSON debe contener un diccionario")
-            datos = cast(Dict[str, Any], datos_cargados)
+            datos = datos_cargados
 
             validar_promocion(datos)
             print("Validación completada con éxito.")

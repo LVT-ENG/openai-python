@@ -14,7 +14,7 @@ def validar_promocion(data: Dict[str, Any]) -> None:
         if campo not in data:
             raise ValueError(f"Falta el campo requerido: {campo}")
 
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
         print("Uso: python3 auto_deploy_v2.py <ruta_al_archivo_json>")
         sys.exit(1)
