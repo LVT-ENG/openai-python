@@ -12,7 +12,30 @@ import shutil
 import argparse
 import urllib.error
 import urllib.request
-from typing import Any, Dict, cast
+from typing import Any, Dict
+
+
+def extraer_json(contenido: str) -> Dict[str, Any]:
+    """Extrae y parsea JSON tolerando formato Markdown y texto adicional generado por LLMs."""
+    contenido = contenido.strip()
+    if contenido.startswith("```json"):
+        contenido = contenido[7:].strip()
+    elif contenido.startswith("```"):
+        contenido = contenido[3:].strip()
+
+    # Intentamos quitar el backtick final de markdown si existe
+    if contenido.endswith("```"):
+        contenido = contenido[:-3].strip()
+
+    try:
+        return dict(json.loads(contenido))
+    except json.JSONDecodeError as e:
+        if e.pos > 0:
+            try:
+                return dict(json.loads(contenido[:e.pos]))
+            except json.JSONDecodeError:
+                pass
+        raise ValueError("Error parseando JSON") from e
 
 
 def validar_promocion(data: Dict[str, Any]) -> bool:
@@ -63,14 +86,9 @@ def procesar_archivos(
             with open(ruta_archivo, "r", encoding="utf-8") as f:
                 contenido_archivo = f.read()
 
-            try:
-                datos_cargados = json.loads(contenido_archivo)
-            except json.JSONDecodeError as e:
-                datos_cargados = json.loads(contenido_archivo[:e.pos])
+            datos_cargados = extraer_json(contenido_archivo)
 
-            if not isinstance(datos_cargados, dict):
-                raise ValueError("El archivo JSON debe contener un diccionario")
-            datos = cast(Dict[str, Any], datos_cargados)
+            datos = datos_cargados
 
             validar_promocion(datos)
             print("Validación completada con éxito.")

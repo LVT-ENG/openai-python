@@ -13,7 +13,7 @@ import time
 import shutil
 import argparse
 import subprocess
-from typing import Any, Dict, cast
+from typing import Any, Dict
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SCRIPT_DIR)
@@ -25,6 +25,28 @@ def setup_directories() -> None:
     os.makedirs(PROMOTIONS_DIR, exist_ok=True)
     os.makedirs(PROCESSED_DIR, exist_ok=True)
     os.makedirs(FAILED_DIR, exist_ok=True)
+
+def extraer_json(contenido: str) -> Dict[str, Any]:
+    """Extrae y parsea JSON tolerando formato Markdown y texto adicional generado por LLMs."""
+    contenido = contenido.strip()
+    if contenido.startswith("```json"):
+        contenido = contenido[7:].strip()
+    elif contenido.startswith("```"):
+        contenido = contenido[3:].strip()
+
+    # Intentamos quitar el backtick final de markdown si existe
+    if contenido.endswith("```"):
+        contenido = contenido[:-3].strip()
+
+    try:
+        return dict(json.loads(contenido))
+    except json.JSONDecodeError as e:
+        if e.pos > 0:
+            try:
+                return dict(json.loads(contenido[:e.pos]))
+            except json.JSONDecodeError:
+                pass
+        raise ValueError("Error parseando JSON") from e
 
 def validar_promocion(data: Dict[str, Any]) -> None:
     campos_requeridos = ["title", "description", "discount_code", "valid_until"]
@@ -40,22 +62,9 @@ def process_file(filepath: str, dry_run: bool) -> bool:
         with open(filepath, "r", encoding="utf-8") as f:
             contenido_archivo = f.read()
 
-        try:
-            datos_cargados = json.loads(contenido_archivo)
-        except json.JSONDecodeError as e:
-            # Fallback en caso de que el LLM incluya texto extra
-            if e.pos > 0:
-                try:
-                    datos_cargados = json.loads(contenido_archivo[:e.pos])
-                except json.JSONDecodeError:
-                    raise ValueError(f"Error parseando JSON incluso con el texto extra cortado.")
-            else:
-                 raise
+        datos_cargados = extraer_json(contenido_archivo)
 
-        if not isinstance(datos_cargados, dict):
-            raise ValueError("El archivo JSON debe contener un diccionario")
-
-        datos = cast(Dict[str, Any], datos_cargados)
+        datos = datos_cargados
         validar_promocion(datos)
         print("Validación completada con éxito.")
 
