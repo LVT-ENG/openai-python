@@ -15,6 +15,29 @@ import urllib.request
 from typing import Any, Dict, cast
 
 
+def extraer_json(contenido: str) -> Dict[str, Any]:
+    """Extrae y parsea JSON tolerando formato Markdown y texto adicional generado por LLMs."""
+    contenido = contenido.strip()
+    if contenido.startswith("```json"):
+        contenido = contenido[7:].strip()
+    elif contenido.startswith("```"):
+        contenido = contenido[3:].strip()
+
+    # Intentamos quitar el backtick final de markdown si existe
+    if contenido.endswith("```"):
+        contenido = contenido[:-3].strip()
+
+    try:
+        return json.loads(contenido)
+    except json.JSONDecodeError as e:
+        if e.pos > 0:
+            try:
+                return json.loads(contenido[:e.pos])
+            except json.JSONDecodeError:
+                pass
+        raise ValueError("Error parseando JSON")
+
+
 def validar_promocion(data: Dict[str, Any]) -> bool:
     """Valida la estructura de una promoción asegurando los campos mínimos."""
     campos_requeridos = ["title", "description", "discount_code", "valid_until"]
@@ -63,10 +86,7 @@ def procesar_archivos(
             with open(ruta_archivo, "r", encoding="utf-8") as f:
                 contenido_archivo = f.read()
 
-            try:
-                datos_cargados = json.loads(contenido_archivo)
-            except json.JSONDecodeError as e:
-                datos_cargados = json.loads(contenido_archivo[:e.pos])
+            datos_cargados = extraer_json(contenido_archivo)
 
             if not isinstance(datos_cargados, dict):
                 raise ValueError("El archivo JSON debe contener un diccionario")
