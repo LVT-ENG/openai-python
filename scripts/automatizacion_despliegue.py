@@ -13,6 +13,7 @@ import time
 import shutil
 import argparse
 import subprocess
+import re
 from typing import Any, Dict, cast
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -40,13 +41,19 @@ def process_file(filepath: str, dry_run: bool) -> bool:
         with open(filepath, "r", encoding="utf-8") as f:
             contenido_archivo = f.read()
 
+        match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", contenido_archivo, re.DOTALL)
+        if match:
+            contenido_limpio = match.group(1).strip()
+        else:
+            contenido_limpio = contenido_archivo.strip()
+
         try:
-            datos_cargados = json.loads(contenido_archivo)
+            datos_cargados = json.loads(contenido_limpio)
         except json.JSONDecodeError as e:
             # Fallback en caso de que el LLM incluya texto extra
             if e.pos > 0:
                 try:
-                    datos_cargados = json.loads(contenido_archivo[:e.pos])
+                    datos_cargados = json.loads(contenido_limpio[:e.pos])
                 except json.JSONDecodeError:
                     raise ValueError(f"Error parseando JSON incluso con el texto extra cortado.")
             else:
