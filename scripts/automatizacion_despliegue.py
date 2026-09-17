@@ -7,13 +7,13 @@ y ejecuta el despliegue a producción de forma automática.
 """
 
 import os
+import re
 import sys
 import json
 import time
 import shutil
 import argparse
 import subprocess
-import re
 from typing import Any, Dict, cast
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -54,8 +54,8 @@ def process_file(filepath: str, dry_run: bool) -> bool:
             if e.pos > 0:
                 try:
                     datos_cargados = json.loads(contenido_limpio[:e.pos])
-                except json.JSONDecodeError:
-                    raise ValueError(f"Error parseando JSON incluso con el texto extra cortado.")
+                except json.JSONDecodeError as err:
+                    raise ValueError(f"Error parseando JSON incluso con el texto extra cortado.") from err
             else:
                  raise
 
