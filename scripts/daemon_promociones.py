@@ -5,6 +5,7 @@
 # y publica los archivos JSON de promociones en la API.
 
 import os
+import re
 import sys
 import json
 import time
@@ -63,10 +64,22 @@ def procesar_archivos(
             with open(ruta_archivo, "r", encoding="utf-8") as f:
                 contenido_archivo = f.read()
 
+            match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", contenido_archivo, re.DOTALL)
+            if match:
+                contenido_limpio = match.group(1).strip()
+            else:
+                contenido_limpio = contenido_archivo.strip()
+
             try:
-                datos_cargados = json.loads(contenido_archivo)
+                datos_cargados = json.loads(contenido_limpio)
             except json.JSONDecodeError as e:
-                datos_cargados = json.loads(contenido_archivo[:e.pos])
+                if e.pos > 0:
+                    try:
+                        datos_cargados = json.loads(contenido_limpio[:e.pos])
+                    except json.JSONDecodeError as err:
+                        raise ValueError(f"Error parseando JSON incluso con el texto extra cortado.") from err
+                else:
+                    raise
 
             if not isinstance(datos_cargados, dict):
                 raise ValueError("El archivo JSON debe contener un diccionario")
@@ -74,6 +87,10 @@ def procesar_archivos(
 
             validar_promocion(datos)
             print("Validación completada con éxito.")
+
+            # Sobreescribimos el archivo con el JSON limpio para que sea válido
+            with open(ruta_archivo, "w", encoding="utf-8") as f:
+                json.dump(datos, f)
 
             if dry_run:
                 print("Simulando el despliegue (modo dry-run)...")
