@@ -69,6 +69,10 @@ def procesar_archivos(
                 contenido_limpio = match.group(1).strip()
             else:
                 contenido_limpio = contenido_archivo.strip()
+                start_idx = contenido_limpio.find('{')
+                end_idx = contenido_limpio.rfind('}')
+                if start_idx != -1 and end_idx != -1 and end_idx >= start_idx:
+                    contenido_limpio = contenido_limpio[start_idx:end_idx+1]
 
             try:
                 datos_cargados = json.loads(contenido_limpio)
