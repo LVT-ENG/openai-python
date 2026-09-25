@@ -3,13 +3,14 @@ import urllib.error
 
 # Import from the script directly
 import importlib.util
-import urllib.request
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 spec = importlib.util.spec_from_file_location("rutina", "scripts/rutina_automatica_promociones.py")
+assert spec is not None
 rutina = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
 spec.loader.exec_module(rutina)
 
 
@@ -49,7 +50,7 @@ def test_validar_promocion_invalida():
 
 
 @patch("urllib.request.urlopen")
-def test_desplegar_promocion_exito(mock_urlopen):
+def test_desplegar_promocion_exito(mock_urlopen: MagicMock):
     mock_response = MagicMock()
     mock_response.read.return_value = b'{"success": true}'
     mock_urlopen.return_value = mock_response
@@ -60,7 +61,7 @@ def test_desplegar_promocion_exito(mock_urlopen):
 
 
 @patch("urllib.request.urlopen")
-def test_desplegar_promocion_fallo(mock_urlopen):
+def test_desplegar_promocion_fallo(mock_urlopen: MagicMock):
     mock_urlopen.side_effect = urllib.error.URLError("Failed")
 
     promo = rutina.Promocion(title="Test", description="Desc", discount_code="CODE", valid_until="2024-12-31")

@@ -14,7 +14,7 @@ import shutil
 import argparse
 import urllib.error
 import urllib.request
-from typing import Any, List
+from typing import Any, Dict, List, cast
 
 from pydantic import BaseModel, ValidationError
 
@@ -84,9 +84,12 @@ def extraer_json_robusto(contenido_archivo: str) -> Any:
 def validar_promocion(datos: Any) -> List[Promocion]:
     """Valida los datos usando Pydantic."""
     if isinstance(datos, dict):
-        return [Promocion(**datos)]
+        # pyright ignora tipos en el unpacking, por lo que convertimos
+        data_dict = cast(Dict[str, Any], datos)
+        return [Promocion(**data_dict)]
     elif isinstance(datos, list):
-        return [Promocion(**item) for item in datos]
+        lista_datos = cast(List[Dict[str, Any]], datos)
+        return [Promocion(**item) for item in lista_datos]
     else:
         raise ValueError("El JSON debe ser un objeto o una lista de objetos.")
 
@@ -102,7 +105,7 @@ def desplegar_promocion(promo: Promocion, api_url: str, api_key: str, dry_run: b
     if hasattr(promo, "model_dump"):
         promo_dict = promo.model_dump()
     else:
-        promo_dict = promo.dict()
+        promo_dict = getattr(promo, "dict")() # noqa: B009
     data_json = json.dumps(promo_dict)
 
     req = urllib.request.Request(api_url, data=data_json.encode("utf-8"), headers=headers, method="POST")
