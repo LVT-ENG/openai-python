@@ -105,7 +105,7 @@ def desplegar_promocion(promo: Promocion, api_url: str, api_key: str, dry_run: b
     if hasattr(promo, "model_dump"):
         promo_dict = promo.model_dump()
     else:
-        promo_dict = getattr(promo, "dict")() # noqa: B009
+        promo_dict = getattr(promo, "dict")()  # noqa: B009
     data_json = json.dumps(promo_dict)
 
     req = urllib.request.Request(api_url, data=data_json.encode("utf-8"), headers=headers, method="POST")
