@@ -14,7 +14,8 @@ import shutil
 import argparse
 import urllib.error
 import urllib.request
-from typing import Any, Dict, List, Union, cast
+from typing import Any, List
+
 from pydantic import BaseModel, ValidationError
 
 # Directorios
@@ -24,16 +25,19 @@ PROMOTIONS_DIR = os.path.join(BASE_DIR, "promociones")
 PROCESSED_DIR = os.path.join(BASE_DIR, "promociones_procesadas")
 FAILED_DIR = os.path.join(BASE_DIR, "promociones_fallidas")
 
+
 class Promocion(BaseModel):
     title: str
     description: str
     discount_code: str
     valid_until: str
 
+
 def setup_directories() -> None:
     os.makedirs(PROMOTIONS_DIR, exist_ok=True)
     os.makedirs(PROCESSED_DIR, exist_ok=True)
     os.makedirs(FAILED_DIR, exist_ok=True)
+
 
 def extraer_json_robusto(contenido_archivo: str) -> Any:
     """
@@ -46,11 +50,11 @@ def extraer_json_robusto(contenido_archivo: str) -> Any:
     else:
         contenido_limpio = contenido_archivo.strip()
 
-    start_obj = contenido_limpio.find('{')
-    end_obj = contenido_limpio.rfind('}')
+    start_obj = contenido_limpio.find("{")
+    end_obj = contenido_limpio.rfind("}")
 
-    start_arr = contenido_limpio.find('[')
-    end_arr = contenido_limpio.rfind(']')
+    start_arr = contenido_limpio.find("[")
+    end_arr = contenido_limpio.rfind("]")
 
     is_obj = start_obj != -1 and end_obj != -1 and end_obj > start_obj
     is_arr = start_arr != -1 and end_arr != -1 and end_arr > start_arr
@@ -62,19 +66,20 @@ def extraer_json_robusto(contenido_archivo: str) -> Any:
             is_obj = False
 
     if is_obj:
-        contenido_limpio = contenido_limpio[start_obj:end_obj+1]
+        contenido_limpio = contenido_limpio[start_obj : end_obj + 1]
     elif is_arr:
-        contenido_limpio = contenido_limpio[start_arr:end_arr+1]
+        contenido_limpio = contenido_limpio[start_arr : end_arr + 1]
 
     try:
         return json.loads(contenido_limpio)
     except json.JSONDecodeError as e:
         if e.pos > 0:
             try:
-                return json.loads(contenido_limpio[:e.pos])
+                return json.loads(contenido_limpio[: e.pos])
             except json.JSONDecodeError as err:
                 raise ValueError("Error parseando JSON incluso con el texto extra cortado.") from err
         raise
+
 
 def validar_promocion(datos: Any) -> List[Promocion]:
     """Valida los datos usando Pydantic."""
@@ -84,6 +89,7 @@ def validar_promocion(datos: Any) -> List[Promocion]:
         return [Promocion(**item) for item in datos]
     else:
         raise ValueError("El JSON debe ser un objeto o una lista de objetos.")
+
 
 def desplegar_promocion(promo: Promocion, api_url: str, api_key: str, dry_run: bool) -> bool:
     if dry_run:
@@ -116,6 +122,7 @@ def desplegar_promocion(promo: Promocion, api_url: str, api_key: str, dry_run: b
         print(f"Error en el despliegue: {e}")
         return False
 
+
 def procesar_archivo(filepath: str, api_url: str, api_key: str, dry_run: bool) -> bool:
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Procesando: {filepath}")
 
@@ -143,9 +150,12 @@ def procesar_archivo(filepath: str, api_url: str, api_key: str, dry_run: bool) -
         print(f"Error inesperado al procesar {filepath}: {e}")
         return False
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Rutina automática para validar y desplegar promociones generadas.")
-    parser.add_argument("--api-url", default="https://api.tryonyou.pro/v1/promotions", help="URL del Endpoint de la API")
+    parser.add_argument(
+        "--api-url", default="https://api.tryonyou.pro/v1/promotions", help="URL del Endpoint de la API"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Simula el despliegue sin hacer peticiones HTTP")
     parser.add_argument("--interval", type=int, default=5, help="Intervalo de sondeo en segundos")
     parser.add_argument("--once", action="store_true", help="Ejecutar una única pasada y salir")
@@ -163,7 +173,7 @@ def main() -> None:
         print("Modo dry-run activado.")
 
     if args.once:
-        files = [os.path.join(PROMOTIONS_DIR, f) for f in os.listdir(PROMOTIONS_DIR) if f.endswith('.json')]
+        files = [os.path.join(PROMOTIONS_DIR, f) for f in os.listdir(PROMOTIONS_DIR) if f.endswith(".json")]
         files.sort()
         for filepath in files:
             exito = procesar_archivo(filepath, args.api_url, api_key or "", args.dry_run)
@@ -179,7 +189,7 @@ def main() -> None:
 
     try:
         while True:
-            files = [os.path.join(PROMOTIONS_DIR, f) for f in os.listdir(PROMOTIONS_DIR) if f.endswith('.json')]
+            files = [os.path.join(PROMOTIONS_DIR, f) for f in os.listdir(PROMOTIONS_DIR) if f.endswith(".json")]
             files.sort()
 
             current_time = time.time()
@@ -201,6 +211,7 @@ def main() -> None:
     except KeyboardInterrupt:
         print("\nRutina detenida por el usuario.")
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

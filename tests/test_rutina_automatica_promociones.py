@@ -1,18 +1,17 @@
-import os
 import json
-import tempfile
-import pytest
-import shutil
-import urllib.request
 import urllib.error
-from unittest.mock import patch, MagicMock
-from io import BytesIO
 
 # Import from the script directly
 import importlib.util
+import urllib.request
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 spec = importlib.util.spec_from_file_location("rutina", "scripts/rutina_automatica_promociones.py")
 rutina = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(rutina)
+
 
 def test_extraer_json_robusto_objeto():
     # Test valid JSON object
@@ -24,6 +23,7 @@ def test_extraer_json_robusto_objeto():
     text_with_json = f"Here is the JSON:\n```json\n{json_str}\n```\nEnjoy!"
     assert rutina.extraer_json_robusto(text_with_json) == data
 
+
 def test_extraer_json_robusto_lista():
     # Test valid JSON array
     data = [{"title": "Test", "description": "Test Desc", "discount_code": "TEST", "valid_until": "2024-12-31"}]
@@ -34,18 +34,21 @@ def test_extraer_json_robusto_lista():
     text_with_json = f"Here is the JSON list:\n{json_str}\nHope this helps."
     assert rutina.extraer_json_robusto(text_with_json) == data
 
+
 def test_validar_promocion_valida():
     data = {"title": "Test", "description": "Test Desc", "discount_code": "TEST", "valid_until": "2024-12-31"}
     promos = rutina.validar_promocion(data)
     assert len(promos) == 1
     assert promos[0].title == "Test"
 
+
 def test_validar_promocion_invalida():
     data = {"title": "Test"}  # Missing required fields
     with pytest.raises(rutina.ValidationError):
         rutina.validar_promocion(data)
 
-@patch('urllib.request.urlopen')
+
+@patch("urllib.request.urlopen")
 def test_desplegar_promocion_exito(mock_urlopen):
     mock_response = MagicMock()
     mock_response.read.return_value = b'{"success": true}'
@@ -55,7 +58,8 @@ def test_desplegar_promocion_exito(mock_urlopen):
     result = rutina.desplegar_promocion(promo, "http://api.test", "fake_key", False)
     assert result is True
 
-@patch('urllib.request.urlopen')
+
+@patch("urllib.request.urlopen")
 def test_desplegar_promocion_fallo(mock_urlopen):
     mock_urlopen.side_effect = urllib.error.URLError("Failed")
 
